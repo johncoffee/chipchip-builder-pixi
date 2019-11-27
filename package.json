@@ -3,15 +3,17 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "http-server -o --cors"
   },
   "author": "",
   "license": "ISC",
-  "description": "",
-  "dependencies": {
+  "description": "nah",
+  "devDependencies": {
+    "foundation-sites": "^6.5.3",
     "http-server": "^0.11.1",
     "nodemon": "^2.0.1",
     "pixi.js": "^5.2.0",
     "typescript": "^3.7.2"
-  }
+  },
+  "dependencies": {}
 }
