@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="../node_modules/foundation-sites/dist/css/foundation.min.css">
+    <style type="text/css">
+        html {
+            background: #f0f0f0;
+            color: #111;
+        }
+        body {
+            margin: 0;
+        }
+
+        builder-container {
+            display: block;
+        }
+    </style>
+    <title>asdf</title>
+</head>
+<body>
+
+<div class="grid-container full">
+    <section class="grid-x">
+        <div class="cell auto">Test drag width of rectangle</div>
+    </section>
+
+    <section class="grid-x">
+        <div class="small-12 cell">
+            <builder-container></builder-container>
+        </div>
+    </section>
+</div>
+
+<!-- GameAnalytics -->
+<script>
+window.GameAnalytics=window.GameAnalytics||function(){(GameAnalytics.q=GameAnalytics.q||[]).push(arguments)};
+GameAnalytics("setEnabledInfoLog", true);
+GameAnalytics("configureBuild", "Demo Pixi 2019.1.1");
+GameAnalytics("configureUserId", "1");
+GameAnalytics("initialize", "30c8d1794760fa8a8336c4d80fbbf4d2", "18db1fbc46ad8206358bea961a5cffa825ccc810");
+
+// GameAnalytics("addDesignEvent", "session-start");
+</script>
+<script defer src='../node_modules/gameanalytics/dist/GameAnalytics.debug.js'></script>
+
+<script src="../node_modules/pixi.js/dist/pixi.min.js"></script>
+<script type="module">
+  import { collideAll } from './helpers.js'
+
+  const PIXI = window.PIXI
+
+  const app = new PIXI.Application({
+    width: 1024,
+    height: 400,
+    backgroundColor: 0xffffff,
+  });
+  document.querySelector('builder-container').appendChild(app.view);
+
+  const template40x2 = [
+    // {x: 0, y: 0, h: 40, w: 40, colour: 0xff8000, },
+    // {x: 0, y: 40, h: 40, w: 40, colour: 0xff0000, },
+    // {x: 40, y: 0, h: 40, w: 40, colour: 0x0080ff, },
+    {x: 40, y: 40, h: 40, w: 40, colour: 0x0000ff, },
+  ]
+
+  const spriteRect = new WeakMap()
+  const rectSprite = new WeakMap()
+
+  template40x2.forEach(fromTemplate)
+
+  function fromTemplate (rect) {
+    const graphics = new PIXI.Graphics();
+    const sprite = new PIXI.Sprite();
+    sprite.addChild(graphics)
+    sprite.x = rect.x
+    sprite.y = rect.y
+
+    function draw() {
+      graphics.clear()
+      graphics.beginFill(rect.colour);
+      graphics.drawRect(0,0, rect.w, rect.h);
+      graphics.endFill();
+    }
+    draw()
+    sprite.redraw = draw
+
+    // ui
+    const ui1 = new PIXI.Sprite()
+    const b1 = new PIXI.Graphics()
+        .beginFill(0x00ff00)
+        .drawCircle(0,0, 12)
+        .endFill();
+    ui1.addChild(b1)
+    ui1.x = rect.w
+    ui1.y = rect.h/2
+    ui1.interactive = true
+    ui1.buttonMode = true
+    ui1
+      .on('pointerdown', onDragStart)
+      .on('pointerup', onDragEnd)
+      .on('pointerupoutside', onDragEnd)
+      .on('pointermove', onDragMove);
+
+    sprite.addChild(ui1)
+
+    spriteRect.set(sprite, rect)
+    rectSprite.set(rect, sprite)
+
+    app.stage.addChild(sprite)
+  }
+
+  function onDragStart(evt) {
+    dragging = true;
+    startX = spriteRect.get(this.parent).x
+    lastX = evt.data.global.x
+    lastY = evt.data.global.y
+  }
+
+  function onDragEnd() {
+    dragging = false;
+    const rect = spriteRect.get(this.parent)
+    setTimeout(() => GameAnalytics("addDesignEvent", "drag-end", rect.w), 50)
+  }
+
+  let dragging = false
+  let startX
+  let lastX
+  let lastY
+
+  function onDragMove(evt) {
+    if (dragging) {
+      const rect = spriteRect.get(this.parent)
+      const test = {...rect}
+      test.w = evt.data.global.x - startX
+      // test.y = test.y + (evt.data.global.y - lastY)
+
+      const isColliding = collideAll(test, template40x2.filter(n => n !== rect))
+      if (isColliding) return console.debug("collision")
+
+      rect.w = test.w;
+      this.parent.redraw()
+
+      this.x = rect.w
+    }
+  }
+
+</script>
+
+</body>
+</html>

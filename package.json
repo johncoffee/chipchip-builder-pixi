@@ -10,6 +10,7 @@
   "description": "nah",
   "devDependencies": {
     "foundation-sites": "^6.5.3",
+    "gameanalytics": "^4.0.4",
     "http-server": "^0.11.1",
     "nodemon": "^2.0.1",
     "pixi.js": "^5.2.0",
