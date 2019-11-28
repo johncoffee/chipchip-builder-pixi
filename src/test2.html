@@ -23,7 +23,7 @@
 
 <div class="grid-container full">
     <section class="grid-x">
-        <div class="cell auto">Test drag with collision detection</div>
+        <div class="cell auto">Expand rectangle with collision detection</div>
     </section>
 
     <section class="grid-x">
@@ -73,11 +73,27 @@
     sprite.buttonMode = true
     sprite.interactive = true
 
-    sprite
-      .on('pointerdown', onDragStart)
-      .on('pointerup', onDragEnd)
-      .on('pointerupoutside', onDragEnd)
-      .on('pointermove', onDragMove);
+    sprite.on('pointerdown', function (evt) {
+      // console.log(evt, tplNode)
+      const test = {...rect}
+      test.w = test.w * 2
+      test.h = test.h * 2
+      const isColliding = collideAll(test, template40x2.filter(n => n !== rect))
+      if (isColliding) return
+
+      rect.w = rect.w * 2
+      rect.h = rect.h * 2
+
+      graphics.clear()
+      graphics.beginFill(rect.colour);
+      graphics.drawRect(0,0, rect.w, rect.h);
+      graphics.endFill();
+    })
+
+
+    // text
+    const txt = new PIXI.Text(`${rect.w} x ${rect.h}`)
+    sprite.addChild(txt)
 
     spriteRect.set(sprite, rect)
     rectSprite.set(rect, sprite)
@@ -85,34 +101,28 @@
     app.stage.addChild(sprite)
   }
 
-  // console.log(app.stage.children)
-  // console.log(spriteRect.get(app.stage.children[2]))
-
-  function onDragStart(evt) {
+  function onDragStart(event) {
+    this.data = event.data;
     this.dragging = true;
-    lastX = evt.data.global.x
-    lastY = evt.data.global.y
   }
 
   function onDragEnd() {
     this.dragging = false;
+    // set the interaction data to null
+    this.data = null;
   }
 
-  let lastX
-  let lastY
-  function onDragMove(evt) {
+  function onDragMove() {
     if (this.dragging) {
-      const rect = spriteRect.get(this)
-      const test = {...rect}
-      console.log(evt.data.global.x, test.x)
-      test.x = test.x + (evt.data.global.x - lastX)
-      test.y = test.y + (evt.data.global.y - lastY)
-
+      const newPosition = this.data.getLocalPosition(this.parent);
+      const rect = spriteRect[this.parent]
+      console.log(rect,this)
+      const test = {...rect, ...newPosition}
       const isColliding = collideAll(test, template40x2.filter(n => n !== rect))
       if (isColliding) return console.debug("collision")
 
-      this.x = test.x;
-      this.y = test.y;
+      this.x = newPosition.x;
+      this.y = newPosition.y;
     }
   }
 
