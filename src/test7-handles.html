@@ -2,13 +2,14 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8"/>
     <link rel="stylesheet" href="../node_modules/foundation-sites/dist/css/foundation.min.css">
     <style type="text/css">
         html {
             background: #f0f0f0;
             color: #111;
         }
+
         body {
             margin: 0;
         }
@@ -38,10 +39,10 @@
   import { collideAll } from './helpers.js'
 
   const Dir = Object.freeze({
-    up : 1,
-    right : 2,
-    down : 3,
-    left : 4,
+    up: 1,
+    right: 2,
+    down: 3,
+    left: 4,
   })
 
   const PIXI = window.PIXI
@@ -50,12 +51,12 @@
     width: 1024,
     height: 400,
     backgroundColor: 0xffffff,
-  });
-  document.querySelector('builder-container').appendChild(app.view);
+  })
+  document.querySelector('builder-container').appendChild(app.view)
 
   const template40x2 = [
-    {x: 50, y: 50, h: 50, w: 50, colour: 0x0080ff, },
-    {x: 150, y: 50, h: 50, w: 50, colour: 0x0000ff, },
+    { x: 50, y: 50, h: 50, w: 50, colour: 0x0080ff, },
+    { x: 150, y: 50, h: 50, w: 50, colour: 0x0000ff, },
   ]
 
   /**
@@ -74,49 +75,57 @@
   let dX, dY
 
   template40x2.map(function fromTemplate (rect) {
-      const graphics = new PIXI.Graphics();
-      const sprite = new PIXI.Sprite();
-      sprite.addChild(graphics)
-      sprite.x = rect.x
-      sprite.y = rect.y
+    const graphics = new PIXI.Graphics()
+    const sprite = new PIXI.Sprite()
+    sprite.addChild(graphics)
+    sprite.x = rect.x
+    sprite.y = rect.y
 
-      sprite.redraw = function redraw() {
-        graphics.clear()
-        graphics.beginFill(rect.colour);
-        graphics.drawRect(0,0, rect.w, rect.h);
-        graphics.endFill();
-      }
+    sprite.redraw = function redraw () {
+      graphics.clear()
+      graphics.beginFill(rect.colour)
+      graphics.drawRect(0, 0, rect.w, rect.h)
+      graphics.endFill()
+    }
 
-      // ui
-      function drawUI (resizeDirection, x, y) {
-        // console.assert(Object.values(Dir).includes(resizeDirection), "unknown "+resizeDirection)
-        const uiSpr = new PIXI.Sprite()
-        const handleGr = new PIXI.Graphics()
-          .beginFill(0x00ff00)
-          .drawCircle(0,0, 12)
-          .endFill();
-        uiSpr.interactive = true
-        uiSpr.buttonMode = true
-        uiSpr
-          .on('pointerdown', onDragStart)
-          .on('pointerup', onDragEnd)
-          .on('pointerupoutside', onDragEnd)
-          .on('pointermove', onDragMove);
+    // ui
+    function drawUI (resizeDirection, x, y) {
+      // console.assert(Object.values(Dir).includes(resizeDirection), "unknown "+resizeDirection)
+      const uiSpr = new PIXI.Sprite()
+      const handleGr = new PIXI.Graphics()
+        .beginFill(0x00ff00)
+        .drawCircle(0, 0, 12)
+        .endFill()
+      uiSpr.interactive = true
+      uiSpr.buttonMode = true
+      uiSpr
+        .on('pointerdown', onDragStart)
+        .on('pointerup', onDragEnd)
+        .on('pointerupoutside', onDragEnd)
+        .on('pointermove', onDragMove)
 
-        uiSpr.x = x
-        uiSpr.y = y
+      uiSpr.x = x
+      uiSpr.y = y
 
-        uiSpr.resizeDirection = resizeDirection
-        uiSpr.addChild(handleGr)
-        sprite.addChild(uiSpr)
-      }
-      drawUI(Dir.up, rect.w/2, 0) //top
-      drawUI(Dir.right, rect.w, rect.h/2)//right
-      drawUI(Dir.down, rect.w/2, rect.h)//down
-      drawUI(Dir.left, 0, rect.h/2)//left
+      uiSpr.resizeDirection = resizeDirection
+      uiSpr.addChild(handleGr)
+      sprite.addChild(uiSpr)
+    }
 
-      return [sprite, rect]
-    })
+    drawUI(Dir.up, rect.w / 2, 0) //top
+    drawUI(Dir.right, rect.w, rect.h / 2)//right
+    drawUI(Dir.down, rect.w / 2, rect.h)//down
+    drawUI(Dir.left, 0, rect.h / 2)//left
+
+    //
+    sprite
+      .on('pointerdown', onDragStart)
+      .on('pointerup', onDragEnd)
+      .on('pointerupoutside', onDragEnd)
+      .on('pointermove', onDragMove)
+
+    return [sprite, rect]
+  })
     .map(([sprite, rect]) => {
       // side effects here
       app.stage.addChild(sprite)
@@ -126,8 +135,8 @@
       rectSprite.set(rect, sprite)
     })
 
-  function onDragStart(evt) {
-    dragging = this;
+  function onDragStart (evt) {
+    dragging = this
     lastX = evt.data.global.x
     lastY = evt.data.global.y
     const rect = spriteRect.get(this.parent)
@@ -137,17 +146,16 @@
     startH = rect.h
   }
 
-  function onDragEnd() {
-    dragging = undefined;
+  function onDragEnd () {
+    dragging = undefined
   }
 
-  function onDragMove(evt) {
-    console.log(evt)
+  function onDragMove (evt) {
     if (dragging === this) {
       const rect = spriteRect.get(this.parent)
 
       // resize dir
-      const test = {...rect}
+      const test = { ...rect }
       dX = evt.data.global.x - startX
       dY = evt.data.global.y - startY
 
@@ -155,32 +163,32 @@
         case Dir.up:
           test.y = startY + dY
           test.h = startH - dY
-          break;
+          break
         case Dir.right:
           test.w = evt.data.global.x - startX
-          break;
+          break
         case Dir.down:
           test.h = dY
-          break;
+          break
         case Dir.left:
           test.x = startX + dX
           test.w = startW - dX
-          break;
+          break
       }
 
       // mutation test
       const isColliding = collideAll(test, template40x2.filter(n => n !== rect))
-      if (isColliding) return console.debug("collision")
+      if (isColliding) return console.debug('collision')
 
-      rect.x = test.x;
-      rect.y = test.y;
-      rect.w = test.w;
-      rect.h = test.h;
+      rect.x = test.x
+      rect.y = test.y
+      rect.w = test.w
+      rect.h = test.h
 
-        position(Dir.left, this.parent.children.find(s => s.resizeDirection === Dir.left), rect)
-        position(Dir.right, this.parent.children.find(s => s.resizeDirection === Dir.right), rect)
-        position(Dir.up, this.parent.children.find(s => s.resizeDirection === Dir.up), rect)
-        position(Dir.down, this.parent.children.find(s => s.resizeDirection === Dir.down), rect)
+      position(Dir.left, this.parent.children.find(s => s.resizeDirection === Dir.left), rect)
+      position(Dir.right, this.parent.children.find(s => s.resizeDirection === Dir.right), rect)
+      position(Dir.up, this.parent.children.find(s => s.resizeDirection === Dir.up), rect)
+      position(Dir.down, this.parent.children.find(s => s.resizeDirection === Dir.down), rect)
 
       const rectsSprite = rectSprite.get(rect)
       rectsSprite.y = rect.y
@@ -190,23 +198,23 @@
     }
   }
 
-  function position(pos, subject, parent) {
+  function position (pos, subject, parent) {
     switch (pos) {
       case Dir.up:
-        subject.x = parent.w/2
+        subject.x = parent.w / 2
         subject.y = 0
         break
       case Dir.right:
         subject.x = parent.w
-        subject.y = parent.h/2
+        subject.y = parent.h / 2
         break
       case Dir.down:
-        subject.x = parent.w/2
+        subject.x = parent.w / 2
         subject.y = parent.h
         break
       case Dir.left:
         subject.x = 0
-        subject.y = parent.h/2
+        subject.y = parent.h / 2
         break
     }
   }
