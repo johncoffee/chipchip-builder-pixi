@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8"/>
+    <link rel="stylesheet" href="../node_modules/foundation-sites/dist/css/foundation.min.css">
+    <style type="text/css">
+        html {
+            background: #f0f0f0;
+            color: #111;
+        }
+
+        body {
+            margin: 0;
+        }
+
+        builder-container {
+            display: block;
+        }
+    </style>
+    <title>asdf</title>
+</head>
+<body>
+
+<div class="grid-container full">
+    <section class="grid-x">
+        <div class="cell auto">Test drag width of rectangle</div>
+    </section>
+
+    <section class="grid-x">
+        <div class="small-12 cell">
+            <builder-container></builder-container>
+        </div>
+    </section>
+</div>
+
+<script src="../node_modules/pixi.js/dist/pixi.min.js"></script>
+<script type="module">
+  import { collideAll } from './helpers2.js'
+
+  const Dir = Object.freeze({
+    up: 1,
+    right: 2,
+    down: 3,
+    left: 4,
+  })
+
+  const PIXI = window.PIXI
+
+  const app = new PIXI.Application({
+    width: 1024,
+    height: 400,
+    backgroundColor: 0xffffff,
+  })
+  document.querySelector('builder-container').appendChild(app.view)
+
+  const template40x2 = [
+    { x: 50, y: 50, h: 50, w: 50, colour: 0x0080ff, },
+    { x: 150, y: 50, h: 50, w: 50, colour: 0x0000ff, },
+  ]
+
+  let dragging = false
+  let startX, startY
+  let lastX, lastY
+  let startW, startH
+  let dX, dY
+
+  // bg for clicking!
+  const bg = new PIXI.Sprite()
+  bg.width = 1000
+  bg.height = 400
+  bg.interactive = true
+  bg.on('click', function(evt) {
+    const lastX = evt.data.global.x
+    const lastY = evt.data.global.y
+    const tpl = { x: lastX, y: lastY,
+      h: 50, w: 50, colour: 0x0000ff, }
+    fromTemplate(tpl)
+  })
+  app.stage.addChild(bg)
+
+  template40x2.map(s => fromTemplate(s))
+
+  function fromTemplate (tpl) {
+    const graphics = new PIXI.Graphics()
+    const sprite = new PIXI.Sprite()
+    sprite.addChild(graphics)
+    sprite.x = tpl.x
+    sprite.y = tpl.y
+
+    sprite.redraw = function redraw (w,h) {
+      graphics.clear()
+      graphics.beginFill(tpl.colour)
+      graphics.drawRect(0, 0, w || tpl.w, h || tpl.h)
+      graphics.endFill()
+
+      position(Dir.left, sprite.children.find(s => s.resizeDirection === Dir.left), graphics)
+      position(Dir.right, sprite.children.find(s => s.resizeDirection === Dir.right), graphics)
+      position(Dir.up, sprite.children.find(s => s.resizeDirection === Dir.up), graphics)
+      position(Dir.down, sprite.children.find(s => s.resizeDirection === Dir.down), graphics)
+    }
+
+    // events
+    sprite.interactive = true
+    sprite.once('click', function(evt) {
+      evt.stopPropagation()
+      this.parent.removeChild(this)
+    })
+
+    sprite.addChild(drawUI(Dir.up, tpl.w / 2, 0)) // up
+    sprite.addChild(drawUI(Dir.right, tpl.w, tpl.h / 2)) // right
+    sprite.addChild(drawUI(Dir.down, tpl.w / 2, tpl.h)) // down
+    sprite.addChild(drawUI(Dir.left, 0, tpl.h / 2)) // left
+
+    // side effects
+    app.stage.addChild(sprite)
+    sprite.redraw()
+  }
+
+  // ui
+  function drawUI (resizeDirection, x, y) {
+    // console.assert(Object.values(Dir).includes(resizeDirection), "unknown "+resizeDirection)
+    const ui = new PIXI.Sprite()
+    const handleGr = new PIXI.Graphics()
+      .beginFill(0x00ff00)
+      .drawCircle(0, 0, 12)
+      .endFill()
+    ui.interactive = true
+    ui.buttonMode = true
+    ui
+      .on('click',  function(evt) {evt.stopPropagation(); onDragStart.call(this,evt)})
+      .on('pointerdown',  function(evt) {evt.stopPropagation(); onDragStart.call(this,evt)})
+      .on('pointerup',  function(evt) { evt.stopPropagation(); onDragEnd.call(this,evt)})
+      .on('pointerupoutside',  function(evt) {onDragEnd.call(this, evt)})
+      .on('pointermove', function(evt) {onDragMove.call(this,evt)})
+
+    ui.x = x
+    ui.y = y
+
+    ui.resizeDirection = resizeDirection
+    ui.addChild(handleGr)
+    return ui
+  }
+
+  function onDragStart (evt) {
+    dragging = this
+    lastX = evt.data.global.x
+    lastY = evt.data.global.y
+    const rect = this.parent.children[0]
+    startX = this.parent.x
+    startY = this.parent.y
+    startW = rect.width
+    startH = rect.height
+  }
+
+  function onDragEnd () {
+    dragging = undefined
+  }
+
+  function onDragMove (evt) {
+    if (dragging === this) {
+      const test = {
+        ...this.parent.children[0].getLocalBounds(),
+        x: this.parent.position.x,
+        y: this.parent.position.y
+      }
+
+      // resize dir
+      dX = evt.data.global.x - startX
+      dY = evt.data.global.y - startY
+
+      switch (this.resizeDirection) {
+        case Dir.up:
+          test.y = startY + dY
+          test.height = startH - dY
+          break
+        case Dir.right:
+          test.width = evt.data.global.x - startX
+          break
+        case Dir.down:
+          test.height = dY
+          break
+        case Dir.left:
+          test.x = startX + dX
+          test.width = startW - dX
+          break
+      }
+
+      this.parent.position.set(test.x, test.y)
+      this.parent.redraw(test.width, test.height)
+    }
+  }
+
+  function position (pos, subject, parent) {
+    switch (pos) {
+      case Dir.up:
+        subject.x = parent.width / 2
+        subject.y = 0
+        break
+      case Dir.right:
+        subject.x = parent.width
+        subject.y = parent.height / 2
+        break
+      case Dir.down:
+        subject.x = parent.width / 2
+        subject.y = parent.height
+        break
+      case Dir.left:
+        subject.x = 0
+        subject.y = parent.height / 2
+        break
+    }
+  }
+
+</script>
+
+</body>
+</html>
